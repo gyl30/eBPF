@@ -35,26 +35,6 @@ int connect_to_remote(const char *addr, uint16_t port)
     }
     return fd;
 }
-// 更新 map 中的值
-int update_map_elem(int map_fd, int key, int value)
-{
-    int lookup_value = 0;
-    int ret = bpf_map_update_elem(map_fd, &key, &value, BPF_ANY);
-    if (ret != 0)
-    {
-        printf("failed update map key %d value %d ret %d\n", key, value, ret);
-        return ret;
-    }
-    printf("update map key %d value %d\n", key, value);
-    // ret = bpf_map_lookup_elem(map_fd, &key, &lookup_value);
-    // if (ret != 0)
-    // {
-    //     printf("failed lookup map key %d ret %d\n", key, ret);
-    //     return ret;
-    // }
-    // printf("lookup map key %d value %d\n", key, lookup_value);
-    return 0;
-}
 int main(int argc, char **argv)
 {
     (void)argc;
@@ -105,11 +85,11 @@ int main(int argc, char **argv)
     uint16_t left_remote_port = 1188;
     uint16_t right_remote_port = 8811;
     int left_fd = connect_to_remote("127.0.0.1", left_remote_port);
-    int right_fd = connect_to_remote("127.0.0.1", left_remote_port);
+    int right_fd = connect_to_remote("127.0.0.1", right_remote_port);
     assert(left_fd != -1 && right_fd != -1);
-    ret = update_map_elem(map_fd, left_remote_port, right_fd);
+    ret = bpf_map_update_elem(map_fd, &left_remote_port, &right_fd, BPF_ANY);
     assert(ret == 0);
-    ret = update_map_elem(map_fd, right_remote_port, left_fd);
+    ret = bpf_map_update_elem(map_fd, &right_remote_port, &left_fd, BPF_ANY);
     assert(ret == 0);
     while (1)
     {
