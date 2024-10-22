@@ -22,10 +22,10 @@ int bpf_prog_verdict(struct __sk_buff *skb)
 {
     __u32 local_port;
     __u32 remote_port;
-    if (skb->len > 256)
-    {
-        return SK_PASS;
-    }
+    // if (skb->len > 256)
+    // {
+    //     return SK_PASS;
+    // }
     local_port = bpf_htonl(skb->local_port);
     remote_port = skb->remote_port;
     bpf_printk("bpf prog verdict local_port %d remote_port %d\n", local_port, remote_port);
