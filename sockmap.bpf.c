@@ -7,9 +7,9 @@ struct
 {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, 65535);
-    __type(key, int);
-    __type(value, int);
-} sock_map_rx SEC(".maps");
+    __type(key, int);          // key : local port
+    __type(value, int);        // value : fd
+} sock_map_rx SEC(".maps");    // 简单的根据源端口获取转发目标的 fd
 
 struct
 {
@@ -33,7 +33,7 @@ int bpf_prog_verdict(struct __sk_buff *skb)
         bpf_printk("bpf_ringbuf_reserve failed\n");
         return SK_PASS;
     }
-
+    // 将数据包端口信息发送到用户空间，后续通过在 map 中查找 fd 进行转发
     e->op = 1;
     e->key = bpf_ntohl(skb->local_port);
     e->value = skb->remote_port;
