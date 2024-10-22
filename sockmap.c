@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         }
         if (err < 0)
         {
-            printf("Error polling perf buffer: %d\n", err);
+            printf("error polling perf buffer: %d\n", err);
             break;
         }
         if (i == 10)

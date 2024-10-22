@@ -17,24 +17,30 @@ struct
     __uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
-SEC("sk_msg")
-int bpf_redir(struct sk_msg_md *msg)
+SEC("sk_skb/stream_parser")
+int bpf_prog_parser(struct __sk_buff *skb)
+{
+    return skb->len;    // NOLINT
+}
+
+SEC("sk_skb/stream_verdict")
+int bpf_prog_verdict(struct __sk_buff *skb)
 {
     struct event *e;
     e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
     if (e == NULL)
     {
         bpf_printk("bpf_ringbuf_reserve failed\n");
-        return 0;
+        return SK_PASS;
     }
 
     e->op = 1;
-    e->key = msg->local_port;
-    e->value = msg->remote_port;
+    e->key = bpf_ntohl(skb->local_port);
+    e->value = skb->remote_port;
 
-    bpf_printk("BPF triggered from PID %d.\n", e->key);
+    bpf_printk("BPF triggered key %d value %d\n", e->key, e->value);
     bpf_ringbuf_submit(e, 0);
-    return 0;
+    return SK_PASS;
 }
 
 char LICENSE[] SEC("license") = "GPL";
