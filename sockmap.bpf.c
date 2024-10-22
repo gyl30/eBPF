@@ -17,6 +17,34 @@ struct
     __uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
+SEC("tp/syscalls/sys_enter_write")
+int handle_tp(void *ctx)
+{
+    struct event *e;
+    __u64 pid = bpf_get_current_pid_tgid() >> 32;
+    // 防止事件太多，仅处理 pid 小于 1000 的进程产生的事件
+    if (pid > 1000)
+    {
+        return 0;
+    }
+
+    e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+    if (e == NULL)
+    {
+        bpf_printk("bpf_ringbuf_reserve failed\n");
+        return SK_PASS;
+    }
+    // 将事件信息发送到用户空间
+    e->op = 1;
+    e->key = pid;
+    e->value = 0;
+
+    bpf_printk("BPF triggered key %d value %d\n", e->key, e->value);
+    bpf_ringbuf_submit(e, 0);
+
+    return 0;
+}
+
 SEC("sk_skb/stream_parser")
 int bpf_prog_parser(struct __sk_buff *skb)
 {
