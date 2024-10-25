@@ -48,7 +48,7 @@ int sock_ops(struct bpf_sock_ops *ops)
 
     local_port = ops->local_port;
     remote_port = bpf_ntohl(ops->remote_port);
-
+    // 过滤掉无关的数据包，从 connection_list 中查找也是可以的
     if (local_port != 8811 && local_port != 1188 && remote_port != 8811 && remote_port != 1188)
     {
         bpf_printk("local_port %d remote_port %d\n", local_port, remote_port);
