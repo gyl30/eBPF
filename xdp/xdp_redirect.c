@@ -77,18 +77,15 @@ int xdp_redirect(struct xdp_md *ctx)
         __u8 eno1_mac[ETH_ALEN] = {0x58, 0x11, 0x22, 0xc3, 0x23, 0xe6};
         __u8 other_mac[ETH_ALEN] = {0xd0, 0x94, 0x66, 0xf1, 0x96, 0xae};
         update_mac(eth, eno1_mac, other_mac);
-
-        ip->saddr = bpf_htonl(SRC_IP_ENO1);
-        ip->daddr = bpf_htonl(DST_IP_ENO1);
-
-        tcp->source = bpf_htons(SRC_PORT_D);
-        tcp->dest = bpf_htons(DST_PORT_B);
-
+        // 172.20.44.81:3333 到 172.20.44.81:1188 修改为 172.20.44.81:6666 到 172.20.44.101:8811
+        ip->saddr = bpf_htonl(SRC_IP_ENO1);     // 172.20.44.81
+        ip->daddr = bpf_htonl(DST_IP_ENO1);     // 172.20.44.101
+        tcp->source = bpf_htons(SRC_PORT_D);    // 6666
+        tcp->dest = bpf_htons(DST_PORT_B);      // 8811
         tcp->check = 0;
         ip->check = 0;
         tcp->check = bpf_csum_diff(0, 0, (void *)tcp, sizeof(struct tcphdr), tcp->check);
         ip->check = bpf_csum_diff(0, 0, (void *)ip, sizeof(struct iphdr), ip->check);
-
         bpf_printk("Redirecting eno1 to other: src port=%d, dst port=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest));
         return bpf_redirect(ENO1_IFINDEX, 0);
         // return XDP_PASS;
@@ -102,17 +99,14 @@ int xdp_redirect(struct xdp_md *ctx)
 
         update_mac(eth, eno1_mac, eno1_mac);
 
-        ip->saddr = bpf_htonl(SRC_IP_ENO1);
-        ip->daddr = bpf_htonl(SRC_IP_ENO1);
-
-        tcp->source = bpf_htons(DST_PORT_A);
-        tcp->dest = bpf_htons(SRC_PORT_C);
-
+        ip->saddr = bpf_htonl(SRC_IP_ENO1);     // 172.20.44.81
+        ip->daddr = bpf_htonl(SRC_IP_ENO1);     // 172.20.44.81
+        tcp->source = bpf_htons(DST_PORT_A);    // 1188
+        tcp->dest = bpf_htons(SRC_PORT_C);      // 3333
         tcp->check = 0;
         ip->check = 0;
         tcp->check = bpf_csum_diff(0, 0, (void *)tcp, sizeof(struct tcphdr), tcp->check);
         ip->check = bpf_csum_diff(0, 0, (void *)ip, sizeof(struct iphdr), ip->check);
-
         bpf_printk("Redirecting other to eno1: src port=%d, dst port=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest));
         return bpf_redirect(ENO1_IFINDEX, 0);
         // return XDP_PASS;
