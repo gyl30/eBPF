@@ -49,6 +49,7 @@ int xdp_redirect(struct xdp_md *ctx)
 {
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
+    long ret;
 
     struct ethhdr *eth = data;
     if ((void *)eth + sizeof(*eth) > data_end)
@@ -86,8 +87,9 @@ int xdp_redirect(struct xdp_md *ctx)
         ip->check = 0;
         tcp->check = bpf_csum_diff(0, 0, (void *)tcp, sizeof(struct tcphdr), tcp->check);
         ip->check = bpf_csum_diff(0, 0, (void *)ip, sizeof(struct iphdr), ip->check);
-        bpf_printk("Redirecting eno1 to other: src port=%d, dst port=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest));
-        return bpf_redirect(ENO1_IFINDEX, 0);
+        ret = bpf_redirect(ENO1_IFINDEX, 0);
+        bpf_printk("Redirecting eno1 to other: src port=%d, dst port=%d redirect ret=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest), ret);
+        return ret;
         // return XDP_PASS;
     }
     // 从 172.20.44.101:8811 到 172.20.44.81:6666 的数据包修改为 从 172.20.44.81:1188 到 172.20.44.81:3333
@@ -107,8 +109,9 @@ int xdp_redirect(struct xdp_md *ctx)
         ip->check = 0;
         tcp->check = bpf_csum_diff(0, 0, (void *)tcp, sizeof(struct tcphdr), tcp->check);
         ip->check = bpf_csum_diff(0, 0, (void *)ip, sizeof(struct iphdr), ip->check);
-        bpf_printk("Redirecting other to eno1: src port=%d, dst port=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest));
-        return bpf_redirect(ENO1_IFINDEX, 0);
+        ret = bpf_redirect(ENO1_IFINDEX, 0);
+        bpf_printk("Redirecting other to eno1: src port=%d, dst port=%d redirect ret=%d\n", bpf_ntohs(tcp->source), bpf_ntohs(tcp->dest), ret);
+        return ret;
         // return XDP_PASS;
     }
 
